@@ -4,7 +4,8 @@ import {
   Wallet, 
   CreditCard, 
   DollarSign,
-  ArrowRight
+  ArrowRight,
+  Plus
 } from 'lucide-react';
 import { 
   PieChart, 
@@ -14,18 +15,17 @@ import {
   Tooltip,
   Legend
 } from 'recharts';
-import { 
-  transactions, 
-  calculateTotals, 
-  incomeSourcesData 
-} from '@/utils/data';
+
+import { useTransactions } from '@/hooks/useTransactions';
+import { calculateTotals, getIncomeSourcesData } from '@/lib/api';
 import StatCard from '@/components/StatCard';
 import TransactionItem from '@/components/TransactionItem';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const Dashboard = () => {
-  const { income, expenses, balance } = calculateTotals();
+  const { data: transactions, isLoading, error } = useTransactions();
   const [activeIndex, setActiveIndex] = useState(0);
   
   const COLORS = ['#8b5cf6', '#f43f5e', '#fb923c', '#a3e635'];
@@ -33,6 +33,30 @@ const Dashboard = () => {
   const formatCurrency = (value: number) => {
     return `$${value.toLocaleString()}`;
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">
+          Loading dashboard data...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    toast.error("Failed to load dashboard data");
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-destructive">
+          Error loading data. Please try refreshing the page.
+        </div>
+      </div>
+    );
+  }
+  
+  const { income, expenses, balance } = calculateTotals(transactions || []);
+  const incomeSourcesData = getIncomeSourcesData(transactions || []);
   
   return (
     <div className="space-y-8">
@@ -74,16 +98,22 @@ const Dashboard = () => {
             </Button>
           </CardHeader>
           <CardContent className="space-y-1">
-            {transactions.slice(0, 5).map(transaction => (
-              <TransactionItem 
-                key={transaction.id}
-                title={transaction.title}
-                date={transaction.date}
-                amount={transaction.amount}
-                type={transaction.type}
-                icon={transaction.icon}
-              />
-            ))}
+            {transactions && transactions.length > 0 ? (
+              transactions.slice(0, 5).map(transaction => (
+                <TransactionItem 
+                  key={transaction.id}
+                  title={transaction.title}
+                  date={transaction.date}
+                  amount={transaction.amount}
+                  type={transaction.type}
+                  icon={transaction.icon}
+                />
+              ))
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">
+                No transactions found. Add your first transaction!
+              </div>
+            )}
           </CardContent>
         </Card>
         
@@ -93,27 +123,33 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent className="flex justify-center py-4">
             <div className="w-full h-[320px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    activeIndex={activeIndex}
-                    data={incomeSourcesData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={80}
-                    outerRadius={120}
-                    paddingAngle={2}
-                    dataKey="value"
-                    onMouseEnter={(_, index) => setActiveIndex(index)}
-                  >
-                    {incomeSourcesData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Amount']} />
-                  <Legend formatter={(value) => <span className="text-sm">{value}</span>} />
-                </PieChart>
-              </ResponsiveContainer>
+              {incomeSourcesData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      activeIndex={activeIndex}
+                      data={incomeSourcesData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={80}
+                      outerRadius={120}
+                      paddingAngle={2}
+                      dataKey="value"
+                      onMouseEnter={(_, index) => setActiveIndex(index)}
+                    >
+                      {incomeSourcesData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Amount']} />
+                    <Legend formatter={(value) => <span className="text-sm">{value}</span>} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-muted-foreground">
+                  No income data available yet
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
