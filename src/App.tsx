@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Income from "./pages/Income";
 import Expenses from "./pages/Expenses";
 import NotFound from "./pages/NotFound";
+import Home from "./pages/Home"; // The existing landing page
 
 const queryClient = new QueryClient();
 
@@ -20,7 +21,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Layout><Dashboard /></Layout>} />
+          <Route path="/" element={<Home />} />
+          <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
           <Route path="/income" element={<Layout><Income /></Layout>} />
           <Route path="/expenses" element={<Layout><Expenses /></Layout>} />
           <Route path="*" element={<NotFound />} />

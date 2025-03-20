@@ -124,3 +124,5 @@
     @apply bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground;
   }
 }
+
+/* Keep existing styles from original project if any */

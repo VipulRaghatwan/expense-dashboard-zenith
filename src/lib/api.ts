@@ -117,27 +117,6 @@ export const calculateTotals = (transactions: Transaction[]) => {
   };
 };
 
-// Get monthly income data for charts
-export const getMonthlyIncomeData = (transactions: Transaction[]) => {
-  const incomeTransactions = transactions.filter(t => t.type === 'income');
-  
-  // Group by date and sum amounts
-  const grouped = incomeTransactions.reduce((acc: Record<string, number>, transaction) => {
-    const date = transaction.date;
-    if (!acc[date]) {
-      acc[date] = 0;
-    }
-    acc[date] += transaction.amount;
-    return acc;
-  }, {});
-  
-  // Convert to chart format
-  return Object.entries(grouped).map(([name, amount]) => ({
-    name,
-    amount
-  }));
-};
-
 // Get income sources data for pie chart
 export const getIncomeSourcesData = (transactions: Transaction[]) => {
   const incomeTransactions = transactions.filter(t => t.type === 'income');
